@@ -89,9 +89,9 @@ if [[ ! -f "./aks-flex-node" ]]; then
 
     # Use Go from PATH if available, otherwise use direct path
     if command -v go &> /dev/null; then
-        go build -o aks-flex-node ./cmd/aks-flex-node
+        go build -o aks-flex-node .
     elif [[ -x "/usr/local/go/bin/go" ]]; then
-        /usr/local/go/bin/go build -o aks-flex-node ./cmd/aks-flex-node
+        /usr/local/go/bin/go build -o aks-flex-node .
     else
         echo -e "${RED}Error: Go not found in PATH or /usr/local/go/bin/go${NC}"
         exit 1

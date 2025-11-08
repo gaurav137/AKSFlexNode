@@ -145,6 +145,11 @@ func isRunningUnderSystemd() bool {
 // setupLogFileWriter creates a file writer for the specified log directory
 // This is used for systemd dual-output logging (journal + file)
 func setupLogFileWriter(logDir string) (io.Writer, error) {
+	// Ensure the log directory exists first
+	if err := ensureLogDirectoryExists(logDir); err != nil {
+		return nil, fmt.Errorf("failed to create log directory '%s': %w", logDir, err)
+	}
+
 	logFilePath := filepath.Join(logDir, "aks-flex-node.log")
 
 	// Create the log file if it doesn't exist
@@ -172,8 +177,38 @@ func setupLogFileWriter(logDir string) (io.Writer, error) {
 	return file, nil
 }
 
+// ensureLogDirectoryExists creates the log directory if it doesn't exist
+func ensureLogDirectoryExists(logDir string) error {
+	// Check if directory already exists
+	if _, err := os.Stat(logDir); err == nil {
+		return nil // Directory already exists
+	}
+
+	// Try to create directory with appropriate permissions
+	if err := os.MkdirAll(logDir, 0755); err == nil {
+		return nil // Successfully created directory
+	}
+
+	// If direct creation fails, try using system command for privileged paths
+	if err := utils.RunSystemCommand("mkdir", "-p", logDir); err != nil {
+		return fmt.Errorf("failed to create directory using system command: %w", err)
+	}
+
+	// Set appropriate permissions on the created directory
+	if err := utils.RunSystemCommand("chmod", "755", logDir); err != nil {
+		fmt.Printf("Warning: Failed to set permissions on directory %s: %v\n", logDir, err)
+	}
+
+	return nil
+}
+
 // setupLogFile creates log file in the specified directory (legacy method for non-systemd)
 func setupLogFile(logger *logrus.Logger, logDir string) error {
+	// Ensure the log directory exists first
+	if err := ensureLogDirectoryExists(logDir); err != nil {
+		return fmt.Errorf("failed to create log directory '%s': %w", logDir, err)
+	}
+
 	writer, err := setupLogFileWriter(logDir)
 	if err != nil {
 		return err

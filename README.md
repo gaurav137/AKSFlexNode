@@ -74,7 +74,7 @@ git clone <repository-url>
 cd AKSFlexNode
 
 # Build the binary
-go build -o aks-flex-node ./cmd/aks-flex-node
+go build -o aks-flex-node .
 
 # Install system-wide
 sudo cp aks-flex-node /usr/local/bin/
