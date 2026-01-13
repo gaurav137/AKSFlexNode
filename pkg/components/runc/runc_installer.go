@@ -68,8 +68,8 @@ func (i *Installer) installRunc() error {
 
 	i.logger.Infof("Downloading runc from %s into %s", runcDownloadURL, tempFile)
 
-	if err := utils.DownloadFile(i.config.Runc.URL, tempFile); err != nil {
-		return fmt.Errorf("failed to download runc from %s: %w", i.config.Runc.URL, err)
+	if err := utils.DownloadFile(runcDownloadURL, tempFile); err != nil {
+		return fmt.Errorf("failed to download runc from %s: %w", runcDownloadURL, err)
 	}
 
 	// Install runc with proper permissions
