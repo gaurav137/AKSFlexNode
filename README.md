@@ -249,6 +249,10 @@ SA_NAME="<some-sa-name>" # will get created it does not exist.
 ```bash
 make publish-dev ARGS="--resource-group $RESOURCE_GROUP --storage-account $SA_NAME"
 ```
+To install the published dev build in a VM being used for testing:
+```bash
+curl -fsSL https://$SA_NAME.z13.web.core.windows.net/scripts/install.sh | sudo bash -s -- --download-binary-base-url https://$SA_NAME.z13.web.core.windows.net
+```
 
 For a complete list of build targets, run `make help`.
 
