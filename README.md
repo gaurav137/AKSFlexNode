@@ -241,16 +241,15 @@ make test
 ```
 
 ### Build and publish binary for testing
-For developers who want to build and publish the changes into an Azure storage account to then easily install on VMs:
+For developers who want to build and publish the changes into an Azure storage account to then easily install on VMs. Command below assumes Azure CLI is installed and `az login` has been done.
 ```bash
 RESOURCE_GROUP="<some-rg-name>" # will get created it does not exist.
 SA_NAME="<some-sa-name>" # will get created it does not exist.
 ```
-Command below  assumes Azure CLI is installed and az login has been done.
 ```bash
 make publish-dev ARGS="--resource-group $RESOURCE_GROUP --storage-account $SA_NAME"
 ```
-To install the published dev build in a VM being used for testing:
+In the VM being used for testing run the command below to install the above published build:
 ```bash
 curl -fsSL https://$SA_NAME.z13.web.core.windows.net/scripts/install.sh | sudo bash -s -- --download-binary-base-url https://$SA_NAME.z13.web.core.windows.net
 ```
