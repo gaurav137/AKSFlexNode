@@ -5,6 +5,8 @@
 *.so
 *.dylib
 aks-flex-node
+aks-flex-node-linux-amd64*
+aks-flex-node-linux-arm64*
 
 # Test binary, built with `go test -c`
 *.test

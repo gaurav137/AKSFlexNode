@@ -62,7 +62,7 @@ func (i *AzureVmInstaller) Execute(ctx context.Context) error {
 
 	// Step 2: Get managed identity from Azure VM IMDS
 	i.logger.Info("Step 2: Getting managed identity from Azure VM")
-	managedIdentityID, err := i.getManagedIdentityID(ctx)
+	managedIdentityID, err := i.getManagedIdentityPrincipalID(ctx)
 	if err != nil {
 		i.logger.Errorf("Failed to get managed identity: %v", err)
 		return fmt.Errorf("azure vm bootstrap setup failed at getting managed identity: %w", err)
@@ -243,18 +243,9 @@ func parseVMResourceID(resourceID string) (subscriptionID, resourceGroup, vmName
 	return subscriptionID, resourceGroup, vmName, nil
 }
 
-// getManagedIdentityID fetches the managed identity details from the Azure VM
+// getManagedIdentityPrincipalID fetches the managed identity details from the Azure VM
 // and returns the client ID of the first user or system assigned managed identity found on the VM.
-// If the config specifies a client ID, it uses that; otherwise it queries IMDS instance and ARM.
-func (i *AzureVmInstaller) getManagedIdentityID(ctx context.Context) (string, error) {
-	// Check if a specific client ID is configured
-	if i.config.Azure.AzureVm != nil &&
-		i.config.Azure.AzureVm.ManagedIdentity != nil &&
-		i.config.Azure.AzureVm.ManagedIdentity.ClientID != "" {
-		i.logger.Info("Using configured managed identity client ID")
-		return i.config.Azure.AzureVm.ManagedIdentity.ClientID, nil
-	}
-
+func (i *AzureVmInstaller) getManagedIdentityPrincipalID(ctx context.Context) (string, error) {
 	i.logger.Info("Querying IMDS for VM instance information")
 
 	// Step 1: Query IMDS instance endpoint to get VM resource ID
@@ -318,10 +309,35 @@ func (i *AzureVmInstaller) getManagedIdentityID(ctx context.Context) (string, er
 
 	// First, check for user-assigned managed identities
 	if len(vm.Identity.UserAssignedIdentities) > 0 {
+		// If multiple user-assigned identities exist, use the configured client ID to select the correct one
+		if len(vm.Identity.UserAssignedIdentities) > 1 {
+			var configuredClientID string
+			if i.config.Azure.AzureVm != nil && i.config.Azure.AzureVm.ManagedIdentity != nil {
+				configuredClientID = i.config.Azure.AzureVm.ManagedIdentity.ClientID
+			}
+
+			if configuredClientID == "" {
+				return "", fmt.Errorf("multiple user-assigned managed identities found - please specify which one to use by setting azure.azureVm.managedIdentity.clientId in the configuration")
+			}
+
+			// Find the identity matching the configured client ID
+			for _, identity := range vm.Identity.UserAssignedIdentities {
+				if identity != nil && identity.ClientID != nil && *identity.ClientID == configuredClientID {
+					if identity.PrincipalID != nil && *identity.PrincipalID != "" {
+						i.logger.Infof("Found user-assigned managed identity with client ID %s and principal ID: %s", configuredClientID, *identity.PrincipalID)
+						return *identity.PrincipalID, nil
+					}
+				}
+			}
+
+			return "", fmt.Errorf("configured managed identity client ID '%s' not found among assigned identities", configuredClientID)
+		}
+
+		// Only one user-assigned identity, use it directly
 		for _, identity := range vm.Identity.UserAssignedIdentities {
-			if identity != nil && identity.ClientID != nil && *identity.ClientID != "" {
-				i.logger.Infof("Found user-assigned managed identity with client ID: %s", *identity.ClientID)
-				return *identity.ClientID, nil
+			if identity != nil && identity.PrincipalID != nil && *identity.PrincipalID != "" {
+				i.logger.Infof("Found user-assigned managed identity with principal ID: %s", *identity.PrincipalID)
+				return *identity.PrincipalID, nil
 			}
 		}
 	}
@@ -359,12 +375,8 @@ func (i *AzureVmInstaller) validateManagedCluster(ctx context.Context) error {
 
 // assignRBACRoles assigns required RBAC roles to the Azure VM's managed identity
 func (i *AzureVmInstaller) assignRBACRoles(ctx context.Context, managedIdentityID string) error {
-	if managedIdentityID == "" {
-		return fmt.Errorf("managed identity ID is empty")
-	}
-
 	// Track assignment results
-	requiredRoles := i.getRoleAssignments()
+		requiredRoles := i.getRoleAssignments()
 	var assignmentErrors []error
 	for idx, role := range requiredRoles {
 		i.logger.Infof("📋 [%d/%d] Assigning role '%s' on scope: %s", idx+1, len(requiredRoles), role.roleName, role.scope)

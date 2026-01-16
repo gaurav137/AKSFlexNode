@@ -397,12 +397,19 @@ curl -s -H Metadata:true -H "Authorization: Basic $CHALLENGE_TOKEN" $TOKEN_URL |
 // createAzureVmTokenScript creates the Azure VM IMDS token script for exec credential authentication
 func (i *Installer) createAzureVmTokenScript() error {
 	// Azure VM IMDS token script - simpler than Arc as it doesn't require challenge token
+	tokenURL := fmt.Sprintf("http://169.254.169.254/metadata/identity/oauth2/token?api-version=2025-04-07&resource=%s", AKSServiceResourceID)
+
+	// Append client_id if a user-assigned managed identity is configured
+	if i.config.Azure.AzureVm != nil && i.config.Azure.AzureVm.ManagedIdentity != nil && i.config.Azure.AzureVm.ManagedIdentity.ClientID != "" {
+		tokenURL = fmt.Sprintf("%s&client_id=%s", tokenURL, i.config.Azure.AzureVm.ManagedIdentity.ClientID)
+	}
+
 	tokenScript := fmt.Sprintf(`#!/bin/bash
 
 # Fetch an AAD token from Azure VM IMDS and output it in the ExecCredential format
 # https://learn.microsoft.com/azure/virtual-machines/instance-metadata-service
 
-TOKEN_URL="http://169.254.169.254/metadata/identity/oauth2/token?api-version=2025-04-07&resource=%s"
+TOKEN_URL="%s"
 EXECCREDENTIAL='''
 {
   "kind": "ExecCredential",
@@ -418,7 +425,7 @@ EXECCREDENTIAL='''
 '''
 
 # Azure VM IMDS only requires the Metadata header
-curl -s -H "Metadata: true" "$TOKEN_URL" | jq "$EXECCREDENTIAL"`, AKSServiceResourceID)
+curl -s -H "Metadata: true" "$TOKEN_URL" | jq "$EXECCREDENTIAL"`, tokenURL)
 
 	// Ensure /var/lib/kubelet directory exists
 	if err := utils.RunSystemCommand("mkdir", "-p", KubeletVarDir); err != nil {

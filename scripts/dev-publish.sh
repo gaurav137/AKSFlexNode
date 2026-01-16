@@ -197,8 +197,7 @@ setup_storage_account() {
             --resource-group "$RESOURCE_GROUP" \
             --location "$LOCATION" \
             --sku Standard_LRS \
-            --kind StorageV2 \
-            --allow-blob-public-access true
+            --kind StorageV2
     else
         log_info "Storage account already exists: $STORAGE_ACCOUNT"
     fi

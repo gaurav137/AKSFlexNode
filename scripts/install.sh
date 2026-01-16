@@ -258,7 +258,10 @@ setup_permissions() {
     log_info "Setting up permissions..."
 
     # Add service user to himds group (created by Arc agent installation)
-    usermod -a -G himds "$SERVICE_USER"
+    # Only needed for Arc agent, not for Azure VMs
+    if ! is_azure_vm; then
+        usermod -a -G himds "$SERVICE_USER"
+    fi
 
     # Configure Azure CLI access for service user
     local current_user
