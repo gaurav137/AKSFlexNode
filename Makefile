@@ -109,6 +109,11 @@ clean:
 	@rm -f *.tar.gz
 	@rm -f coverage.out coverage.html
 
+# Publish to dev Azure storage account
+.PHONY: publish-dev
+publish-dev:
+	@./scripts/publish-dev.sh $(ARGS)
+
 .PHONY: update-build-metadata
 update-build-metadata:
 	@echo "📅 Build Date: $(BUILD_DATE)"
@@ -146,5 +151,6 @@ help:
 	@echo ""
 	@echo "Other Targets:"
 	@echo "  clean              Clean build artifacts"
+	@echo "  publish-dev        Publish to dev storage (use ARGS='--resource-group rg --storage-account sa')"
 	@echo "  update-build-metadata Show build metadata"
 	@echo "  help               Show this help message"

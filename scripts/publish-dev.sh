@@ -1,5 +1,5 @@
 #!/bin/bash
-# AKS Flex Node Dev Publish Script
+# AKS Flex Node Publish Dev Script
 # This script builds the project, creates a storage account with static website support,
 # and uploads the scripts and binary archives for development/testing purposes.
 

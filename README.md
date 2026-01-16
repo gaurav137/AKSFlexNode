@@ -240,6 +240,16 @@ make build
 make test
 ```
 
+### Build and publish binary for testing
+For developers who want to build and then publish the changes into an Azure storage account to then easily install on VMs:
+```bash
+RESOURCE_GROUP="<some-rg-name>" # will get created it does not exist.
+SA_NAME="<some-sa-name>" # will get created it does not exist.
+```
+```bash
+make publish-dev ARGS="--resource-group $RESOURCE_GROUP --storage-account $SA_NAME"
+```
+
 For a complete list of build targets, run `make help`.
 
 ## System Requirements
