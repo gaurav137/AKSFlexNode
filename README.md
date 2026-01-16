@@ -246,8 +246,8 @@ For developers who want to build and publish the changes into an Azure storage a
 RESOURCE_GROUP="<some-rg-name>" # will get created it does not exist.
 SA_NAME="<some-sa-name>" # will get created it does not exist.
 ```
+Command below  assumes Azure CLI is installed and az login has been done.
 ```bash
-# Below assumes Azure CLI is installed and az login has been done.
 make publish-dev ARGS="--resource-group $RESOURCE_GROUP --storage-account $SA_NAME"
 ```
 To install the published dev build in a VM being used for testing:
