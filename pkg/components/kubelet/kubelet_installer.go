@@ -366,7 +366,7 @@ curl -s -H Metadata:true -H "Authorization: Basic $CHALLENGE_TOKEN" $TOKEN_URL |
 // createAzureVmTokenScript creates the Azure VM IMDS token script for exec credential authentication
 func (i *Installer) createAzureVmTokenScript() error {
 	// Azure VM IMDS token script - simpler than Arc as it doesn't require challenge token
-	tokenURL := fmt.Sprintf("http://169.254.169.254/metadata/identity/oauth2/token?api-version=2025-04-07&resource=%s", AKSServiceResourceID)
+	tokenURL := fmt.Sprintf("http://169.254.169.254/metadata/identity/oauth2/token?api-version=2025-04-07&resource=%s", aksServiceResourceID)
 
 	// Append client_id if a user-assigned managed identity is configured
 	if i.config.Azure.AzureVm != nil && i.config.Azure.AzureVm.ManagedIdentity != nil && i.config.Azure.AzureVm.ManagedIdentity.ClientID != "" {
@@ -397,17 +397,17 @@ EXECCREDENTIAL='''
 curl -s -H "Metadata: true" "$TOKEN_URL" | jq "$EXECCREDENTIAL"`, tokenURL)
 
 	// Ensure /var/lib/kubelet directory exists
-	if err := utils.RunSystemCommand("mkdir", "-p", KubeletVarDir); err != nil {
+	if err := utils.RunSystemCommand("mkdir", "-p", kubeletVarDir); err != nil {
 		return fmt.Errorf("failed to create kubelet var directory: %w", err)
 	}
 
 	// Write token script atomically with executable permissions
-	if err := utils.WriteFileAtomicSystem(KubeletTokenScriptPath, []byte(tokenScript), 0755); err != nil {
+	if err := utils.WriteFileAtomicSystem(kubeletTokenScriptPath, []byte(tokenScript), 0755); err != nil {
 		return fmt.Errorf("failed to create Azure VM token script: %w", err)
 	}
 
 	// Ensure the script has executable permissions (explicit chmod as backup)
-	if err := utils.RunSystemCommand("chmod", "755", KubeletTokenScriptPath); err != nil {
+	if err := utils.RunSystemCommand("chmod", "755", kubeletTokenScriptPath); err != nil {
 		return fmt.Errorf("failed to set executable permissions on Azure VM token script: %w", err)
 	}
 
