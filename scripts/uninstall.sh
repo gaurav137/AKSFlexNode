@@ -36,6 +36,28 @@ log_error() {
     echo -e "${RED}ERROR:${NC} $1"
 }
 
+is_azure_vm() {
+    # Detect if running on an Azure VM by querying the Instance Metadata Service (IMDS)
+    # IMDS is available at 169.254.169.254 and requires the Metadata header
+    local imds_url="http://169.254.169.254/metadata/instance?api-version=2025-04-07"
+    local response
+
+    if command -v curl &> /dev/null; then
+        response=$(curl -s -f -H "Metadata:true" --connect-timeout 2 "$imds_url" 2>/dev/null)
+    elif command -v wget &> /dev/null; then
+        response=$(wget -q -O- --header="Metadata:true" --timeout=2 "$imds_url" 2>/dev/null)
+    else
+        return 1
+    fi
+
+    # If we got a valid JSON response with compute info, we're on an Azure VM
+    if [[ -n "$response" ]] && echo "$response" | grep -q '"compute"'; then
+        return 0
+    fi
+
+    return 1
+}
+
 confirm_uninstall() {
     echo -e "${YELLOW}AKS Flex Node Uninstaller${NC}"
     echo -e "${YELLOW}===========================${NC}"
@@ -305,7 +327,13 @@ main() {
     remove_service_user
     remove_directories
     remove_binary
-    cleanup_arc_agent
+
+    # Only cleanup Arc agent if not running on Azure VM
+    if ! is_azure_vm; then
+        cleanup_arc_agent
+    else
+        log_info "Running on Azure VM - skipping Arc agent cleanup"
+    fi
 
     # Show completion message
     show_completion_message

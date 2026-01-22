@@ -452,6 +452,12 @@ setup_systemd_service() {
 
     log_info "Configuring service file for current user ($current_user)..."
     sed -i "s|PLACEHOLDER_AZURE_CONFIG_DIR|$current_user_home/.azure|g" /etc/systemd/system/aks-flex-node-agent.service
+
+    # Remove himds supplementary group for Azure VMs (not needed since they use IMDS instead of Arc)
+    if is_azure_vm; then
+        sed -i "s|SupplementaryGroups=himds PLACEHOLDER_USER_GROUP|SupplementaryGroups=PLACEHOLDER_USER_GROUP|g" /etc/systemd/system/aks-flex-node-agent.service
+    fi
+
     sed -i "s|PLACEHOLDER_USER_GROUP|$current_user|g" /etc/systemd/system/aks-flex-node-agent.service
 
     # Reload systemd
