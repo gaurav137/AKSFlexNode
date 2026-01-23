@@ -200,6 +200,7 @@ func (i *Installer) createKubeletDefaultsFile() error {
 	kubeletDefaults := fmt.Sprintf(`KUBELET_NODE_LABELS="%s"
 KUBELET_CONFIG_FILE_FLAGS=""
 KUBELET_FLAGS="\
+	--v=%d \
   --address=0.0.0.0 \
   --anonymous-auth=false \
   --authentication-token-webhook=true \
@@ -223,6 +224,7 @@ KUBELET_FLAGS="\
   --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_256_GCM_SHA384,TLS_RSA_WITH_AES_128_GCM_SHA256 \
   "`,
 		strings.Join(labels, ","),
+		i.config.Node.Kubelet.Verbosity,
 		mapToEvictionThresholds(i.config.Node.Kubelet.EvictionHard, ","),
 		mapToKeyValuePairs(i.config.Node.Kubelet.KubeReserved, ","),
 		i.config.Node.Kubelet.ImageGCHighThreshold,
@@ -236,7 +238,7 @@ KUBELET_FLAGS="\
 	}
 
 	// Write kubelet defaults file atomically with proper permissions
-	if err := utils.WriteFileAtomicSystem(kubeletDefaultsPath, []byte(kubeletDefaults), 0644); err != nil {
+	if err := utils.WriteFileAtomicSystem(kubeletDefaultsPath, []byte(kubeletDefaults), 0o644); err != nil {
 		return fmt.Errorf("failed to create kubelet defaults file: %w", err)
 	}
 
@@ -251,7 +253,7 @@ func (i *Installer) createSystemdDropInFile(filePath, content, description strin
 	}
 
 	// Write config file atomically with proper permissions
-	if err := utils.WriteFileAtomicSystem(filePath, []byte(content), 0644); err != nil {
+	if err := utils.WriteFileAtomicSystem(filePath, []byte(content), 0o644); err != nil {
 		return fmt.Errorf("failed to create %s: %w", description, err)
 	}
 
@@ -291,7 +293,6 @@ ExecStartPre=-/sbin/iptables -t nat --numeric --list
 ExecStart=/usr/local/bin/kubelet \
         --enable-server \
         --node-labels="${KUBELET_NODE_LABELS}" \
-        --v=2 \
         --volume-plugin-dir=/etc/kubernetes/volumeplugins \
         --pod-manifest-path=/etc/kubernetes/manifests/ \
         $KUBELET_TLS_BOOTSTRAP_FLAGS \
@@ -302,7 +303,7 @@ ExecStart=/usr/local/bin/kubelet \
 WantedBy=multi-user.target`
 
 	// Write kubelet service file atomically with proper permissions
-	if err := utils.WriteFileAtomicSystem(kubeletServicePath, []byte(kubeletService), 0644); err != nil {
+	if err := utils.WriteFileAtomicSystem(kubeletServicePath, []byte(kubeletService), 0o644); err != nil {
 		return fmt.Errorf("failed to create kubelet service file: %w", err)
 	}
 
@@ -348,7 +349,7 @@ curl -s -H Metadata:true -H "Authorization: Basic $CHALLENGE_TOKEN" $TOKEN_URL |
 	}
 
 	// Write token script atomically with executable permissions
-	if err := utils.WriteFileAtomicSystem(kubeletTokenScriptPath, []byte(tokenScript), 0755); err != nil {
+	if err := utils.WriteFileAtomicSystem(kubeletTokenScriptPath, []byte(tokenScript), 0o755); err != nil {
 		return fmt.Errorf("failed to create Arc token script: %w", err)
 	}
 
@@ -410,7 +411,7 @@ users:
 		i.config.Azure.TargetCluster.Name)
 
 	// Write kubeconfig file to the correct location for kubelet
-	if err := utils.WriteFileAtomicSystem(kubeletKubeconfigPath, []byte(kubeconfigContent), 0600); err != nil {
+	if err := utils.WriteFileAtomicSystem(kubeletKubeconfigPath, []byte(kubeconfigContent), 0o600); err != nil {
 		return fmt.Errorf("failed to create kubeconfig file: %w", err)
 	}
 
@@ -429,7 +430,6 @@ func (i *Installer) setUpClients() error {
 	}
 	i.mcClient = clientFactory.NewManagedClustersClient()
 	return nil
-
 }
 
 // GetClusterCredentials retrieves cluster kube admin credentials using Azure SDK
