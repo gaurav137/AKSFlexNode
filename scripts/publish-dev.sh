@@ -12,12 +12,16 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Source shared version file
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/version.sh"
+
 # Configuration - these can be overridden via command line arguments or environment variables
 REPO="Azure/AKSFlexNode"
 RESOURCE_GROUP="${DEV_PUBLISH_RESOURCE_GROUP:-}"
 STORAGE_ACCOUNT="${DEV_PUBLISH_STORAGE_ACCOUNT:-}"
 LOCATION="${DEV_PUBLISH_LOCATION:-eastus}"
-VERSION="${DEV_PUBLISH_VERSION:-v0.0.5}"
+VERSION="${DEV_PUBLISH_VERSION:-$AKS_FLEX_NODE_VERSION}"
 
 # Functions
 log_info() {
