@@ -22,6 +22,8 @@ LOG_DIR="/var/log/aks-flex-node"
 GITHUB_API="https://api.github.com/repos/${REPO}"
 GITHUB_RELEASES="${GITHUB_API}/releases"
 DOWNLOAD_BINARY_BASE_URL="https://github.com"  # Can be overridden via --download-binary-base-url
+DEFAULT_VERSION="v0.0.5"
+USE_LATEST_RELEASE=false
 
 # Functions
 log_info() {
@@ -549,12 +551,18 @@ main() {
                     exit 1
                 fi
                 ;;
+            --use-latest-release)
+                USE_LATEST_RELEASE=true
+                shift
+                ;;
             --help|-h)
                 echo "Usage: $0 [OPTIONS]"
                 echo ""
                 echo "Options:"
                 echo "  --download-binary-base-url URL  Override the base URL for downloading binaries"
                 echo "                                  Default: https://github.com"
+                echo "  --use-latest-release            Fetch and use the latest release from GitHub"
+                echo "                                  Default: use version $DEFAULT_VERSION"
                 echo "  --help, -h                      Show this help message"
                 exit 0
                 ;;
@@ -585,16 +593,19 @@ main() {
 
     log_info "Detected platform: ${os}/${arch}"
 
-    # Get latest release
+    # Get version (use default or fetch latest based on flag)
     local version
-    version=$(get_latest_release)
-
-    if [[ -z "$version" ]]; then
-        log_error "Failed to get latest release information"
-        exit 1
+    if [[ "$USE_LATEST_RELEASE" == "true" ]]; then
+        version=$(get_latest_release)
+        if [[ -z "$version" ]]; then
+            log_error "Failed to get latest release information"
+            exit 1
+        fi
+        log_info "Latest version: $version"
+    else
+        version="$DEFAULT_VERSION"
+        log_info "Using default version: $version"
     fi
-
-    log_info "Latest version: $version"
 
     # Download binary
     local binary_path
