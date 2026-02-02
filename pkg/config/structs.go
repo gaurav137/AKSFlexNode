@@ -100,8 +100,10 @@ type NodeConfig struct {
 type KubeletConfig struct {
 	KubeReserved         map[string]string `json:"kubeReserved"`
 	EvictionHard         map[string]string `json:"evictionHard"`
+	Verbosity            int               `json:"verbosity"`
 	ImageGCHighThreshold int               `json:"imageGCHighThreshold"`
 	ImageGCLowThreshold  int               `json:"imageGCLowThreshold"`
+	DNSServiceIP         string            `json:"dnsServiceIP"` // Cluster DNS service IP (default: 10.0.0.10 for AKS)
 }
 
 // PathsConfig holds file system paths used by the agent for Kubernetes and CNI configurations.

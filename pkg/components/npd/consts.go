@@ -2,10 +2,10 @@ package npd
 
 // NPD binary paths to check and manage
 const (
-	npdBinaryPath = "/usr/bin/node-problem-detector"
-	npdConfigPath = "/etc/node-problem-detector/system-stats-monitor.json"
-
-	tempDir = "/tmp/npd"
+	npdBinaryPath  = "/usr/bin/node-problem-detector"
+	npdConfigPath  = "/etc/node-problem-detector/kernel-monitor.json"
+	npdServicePath = "/etc/systemd/system/node-problem-detector.service"
+	tempDir        = "/tmp/npd"
 )
 
 var (
