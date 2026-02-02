@@ -11,15 +11,6 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Source shared version file
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [[ -f "$SCRIPT_DIR/version.sh" ]]; then
-    source "$SCRIPT_DIR/version.sh"
-else
-    # Fallback if version.sh is not found (e.g., when running from curl)
-    AKS_FLEX_NODE_VERSION="v0.0.5"
-fi
-
 # Configuration
 REPO="Azure/AKSFlexNode"
 SERVICE_NAME="aks-flex-node"
@@ -31,7 +22,7 @@ LOG_DIR="/var/log/aks-flex-node"
 GITHUB_API="https://api.github.com/repos/${REPO}"
 GITHUB_RELEASES="${GITHUB_API}/releases"
 DOWNLOAD_BINARY_BASE_URL="https://github.com"  # Can be overridden via --download-binary-base-url
-DEFAULT_VERSION="$AKS_FLEX_NODE_VERSION"
+DEFAULT_VERSION="v0.0.5"
 USE_LATEST_RELEASE=false
 
 # Functions
